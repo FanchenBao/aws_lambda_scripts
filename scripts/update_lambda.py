@@ -165,7 +165,7 @@ if __name__ == '__main__':
         exception_handler('Failed to prepare zip file for function', err_prep)
 
     config_file = ROOT_DIR.joinpath(
-        f'{args.func_folder_path}/config.{os.environ["env"]}.json',
+        f'{args.func_folder_path}/config.dev.json',
     )
     try:
         with open(config_file, 'r') as f_obj:

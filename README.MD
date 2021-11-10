@@ -54,7 +54,7 @@ Follow these steps to update an existing lambda function
 
 1. Edit and test the function source code locally.
 2. Create and edit the configuration of the dev (i.e. `$LATEST`) version of the function in `config.dev.json` file.
-3. Use `scripts/update_lambda.py` to update the lambda function. Below is the help message of the script. See [example for function update]() for sample usage.
+3. Use `scripts/update_lambda.py` to update the lambda function. Below is the help message of the script. See [example](https://github.com/FanchenBao/aws_lambda_scripts#example) for sample usage.
     ```
     ╰─$ python3 scripts/update_lambda.py -h
     usage: update_lambda.py [-h] --func_folder_path FUNC_FOLDER_PATH
@@ -83,7 +83,7 @@ Except from the word `dev`, there is no restriction on alias name. The reason `d
 Follow these steps to publish to alias
 
 1. Create and edit the configuration for the alias in `config.[alias].json` file.
-2. Use `scripts/publish_to_alias.py` to publish the alias. Below is the help message of the script. See [example for alias publication]() for sample usage.
+2. Use `scripts/publish_to_alias.py` to publish the alias. Below is the help message of the script. See [example](https://github.com/FanchenBao/aws_lambda_scripts#example) for sample usage.
     ```
     ╰─$ python3 scripts/publish_to_alias.py -h
     usage: publish_to_alias.py [-h] --func_folder_path FUNC_FOLDER_PATH
@@ -116,7 +116,7 @@ Layer is a way for different lambda functions to share the same resources. Typic
 
 For more information about layers, check out its [documentation](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html).
 
-Use `scripts/publish_layer.py` to publish a layer. Below is the help message of the scripts. See [example for layer publication]() for sample usage.
+Use `scripts/publish_layer.py` to publish a layer. Below is the help message of the scripts. See [example](https://github.com/FanchenBao/aws_lambda_scripts#example) for sample usage.
 
     ```
     ╰─$ python3 scripts/publish_layer.py -h
@@ -152,7 +152,7 @@ This repo contains a sample lambda function to demonstrate how the scripts work.
 
 1. Clone the repo
     ```bash
-    git clone ??
+    git clone https://github.com/FanchenBao/aws_lambda_scripts.git
     ```
 2. Create a virtualenv for `aws_lambda_scripts`.
 3. Install dependencies

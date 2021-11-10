@@ -273,7 +273,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.alias == 'dev':
-        logger.error('Using "dev" as alias is forbidden.')
+        logger.error('\033[30;41mUsing "dev" as alias is forbidden.\033[0m')
         sys.exit(1)
 
     logger.info(

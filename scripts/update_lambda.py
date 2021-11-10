@@ -42,7 +42,7 @@ def get_argument_parser() -> ArgumentParser:  # pragma no cover
     parser = ArgumentParser(
         description=(
             'Update lambda code and configuration for AWS Lambda '
-            'Usage: env=test python3 '
+            'Usage: env=dev python3 '
             'update_lambda --func_name [NAME] --func_folder_path [PATH] '
             '--description [DESC].'
         ),
@@ -181,8 +181,8 @@ if __name__ == '__main__':
 
     logger.info(f'\033[30;43mUpdating code in {args.func_name}...\033[0m')
 
-    if os.environ['env'] != 'dev':
-        logger.error('Must use this script when "env=dev"!')
+    if 'env' not in os.environ or os.environ['env'] != 'dev':
+        logger.error('\033[30;41mMust use this script when "env=dev"!\033[0m')
         sys.exit(1)
     try:
         prep_files(args.func_folder_path)

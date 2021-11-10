@@ -164,11 +164,14 @@ if __name__ == '__main__':
     except Exception as err_prep:
         exception_handler('Failed to prepare zip file for function', err_prep)
 
+    config_file = ROOT_DIR.joinpath(
+        f'{args.func_folder_path}/config.{os.environ["env"]}.json',
+    )
     try:
-        with open('config.json', 'r') as f_obj:
+        with open(config_file, 'r') as f_obj:
             func_config = json.load(f_obj)
     except FileNotFoundError as err_config:
-        exception_handler('Must provide config.json file', err_config)
+        exception_handler(f'Must provide {config_file} file', err_config)
 
     try:
         update(args.func_name, args.description, func_config)

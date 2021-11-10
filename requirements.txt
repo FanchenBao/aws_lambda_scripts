@@ -68,6 +68,7 @@ stevedore==3.5.0
 testfixtures==6.18.3
 toml==0.10.2
 tomli==1.2.2
+types-requests==2.26.0
 typing-extensions==3.10.0.2
 unify==0.5
 untokenize==0.1.1

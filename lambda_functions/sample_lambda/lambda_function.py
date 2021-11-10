@@ -1,5 +1,8 @@
+import json
 import logging
 import os
+
+import requests
 
 # set up logger
 logger = logging.getLogger()
@@ -20,5 +23,8 @@ def lambda_handler(event, context):
     :param context: Not used.
     :type context: [type]
     """
-    logger.info('hello world')
     logger.info(f'env = {os.environ["env"]}')
+    resp = requests.get(
+        'https://v2.jokeapi.dev/joke/Programming?type=single',
+    )
+    logger.info(json.loads(resp.text)['joke'])

@@ -100,7 +100,7 @@ def prep_files(func_folder_path: str) -> None:
         rmtree(TEMP)
     Path.mkdir(TEMP, parents=True)
     # copy files to temp
-    for lambda_file in ROOT_DIR.joinpath(f'{func_folder_path}').glob('*'):
+    for lambda_file in ROOT_DIR.joinpath(f'{func_folder_path}').glob('*.py'):
         copy(str(lambda_file), str(TEMP))
     # create zip file
     make_archive(ZIP_NAME.split('.')[0], 'zip', str(TEMP))

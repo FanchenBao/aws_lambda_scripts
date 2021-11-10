@@ -1,4 +1,4 @@
 {
     "vars": {"env": "dev"},
-    "layers": []
+    "layers": ["requests"]
 }

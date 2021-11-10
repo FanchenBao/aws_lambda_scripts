@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Dict
 
-from config import CLIENT
+from config import CLIENT, ROOT_DIR
 
 # set up logger
 logger = logging.getLogger()
@@ -18,9 +18,6 @@ formatter = logging.Formatter(
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 logger.setLevel(logging.INFO)
-
-# Constant
-ROOT_DIR: Path = Path(__file__).parent.parent.absolute()
 
 
 def get_argument_parser() -> ArgumentParser:  # pragma no cover

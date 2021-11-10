@@ -7,9 +7,15 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from shutil import copy, make_archive, rmtree
-from typing import Dict
+from typing import Dict, List, Union, cast
 
-from config import CLIENT
+from config import (
+    CLIENT,
+    FUNCTION_TEMP,
+    FUNCTION_ZIP,
+    PYTHON_VERSION,
+    ROOT_DIR,
+)
 
 # set up logger
 logger = logging.getLogger()
@@ -21,16 +27,11 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 logger.setLevel(logging.INFO)
 
-# CONSTANT
-ROOT_DIR: Path = Path(__file__).parent.parent.absolute()
-TEMP: Path = ROOT_DIR.joinpath('temp')
-ZIP_NAME: str = 'function.zip'
-
 
 def clean_up() -> None:
     """Remove the temp folder and function zip file."""
-    rmtree(TEMP)
-    Path.unlink(ROOT_DIR.joinpath(ZIP_NAME))
+    rmtree(FUNCTION_TEMP)
+    Path.unlink(ROOT_DIR.joinpath(FUNCTION_ZIP))
 
 
 def get_argument_parser() -> ArgumentParser:  # pragma no cover
@@ -96,18 +97,42 @@ def prep_files(func_folder_path: str) -> None:
         for the Lambda function.
     """
     # prepare temp folder
-    if Path.exists(TEMP):  # clean up any previous upload
-        rmtree(TEMP)
-    Path.mkdir(TEMP, parents=True)
+    if Path.exists(FUNCTION_TEMP):  # clean up any previous upload
+        rmtree(FUNCTION_TEMP)
+    Path.mkdir(FUNCTION_TEMP, parents=True)
     # copy files to temp
     for lambda_file in ROOT_DIR.joinpath(f'{func_folder_path}').glob('*.py'):
-        copy(str(lambda_file), str(TEMP))
+        copy(str(lambda_file), str(FUNCTION_TEMP))
     # create zip file
-    make_archive(ZIP_NAME.split('.')[0], 'zip', str(TEMP))
+    make_archive(FUNCTION_ZIP.split('.')[0], 'zip', str(FUNCTION_TEMP))
+
+
+def get_layer_arn(layers: List) -> List[str]:
+    """Get the arns for each layer specified by the config JSON file.
+
+    :param layers: Name of the layers specified in the config JSON file.
+    :type layers: List
+    :raises RuntimeError: when getting the list of layers fails
+    :return: A list of layer arns.
+    :rtype: List[str]
+    """
+    if not layers:
+        return []
+    try:
+        resp = CLIENT.list_layers(CompatibleRuntime=PYTHON_VERSION)
+    except Exception as err:
+        raise RuntimeError('Unable to obtain ARNs for layers') from err
+    res = []
+    for ly in resp['Layers']:
+        if ly['LayerName'] in layers:
+            res.append(ly['LatestMatchingVersion']['LayerVersionArn'])
+    return res
 
 
 def update(
-    func_name: str, desc: str, func_config: Dict[str, Dict],
+    func_name: str,
+    desc: str,
+    func_config: Dict[str, Union[Dict, List]],
 ) -> None:
     """Upload lambda code base (as a zip file) to its associated AWS Lambda.
 
@@ -122,7 +147,7 @@ def update(
     :raises RuntimeError: Either update function code fails, or update function
         config fais.
     """
-    with open(ZIP_NAME, 'rb') as f_obj:  # upload
+    with open(FUNCTION_ZIP, 'rb') as f_obj:  # upload
         zip_bytes = f_obj.read()
         try:
             resp1 = CLIENT.update_function_code(
@@ -140,7 +165,7 @@ def update(
             Environment={
                 'Variables': func_config.get('vars', {}),
             },
-            Layers=func_config.get('layers', []),
+            Layers=get_layer_arn(cast(List, func_config.get('layers', []))),
         )
     except Exception as err2:
         raise RuntimeError(

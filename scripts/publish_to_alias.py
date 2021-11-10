@@ -37,7 +37,7 @@ def get_argument_parser() -> ArgumentParser:  # pragma no cover
             'Usage: python3 '
             'publish_to_alias --func_folder_path [path] '
             '--func_name [lambda name] '
-            '--alias [alias]'
+            '--alias [alias] '
             '--description [description of the alias].'
         ),
     )
@@ -291,7 +291,7 @@ if __name__ == '__main__':
     )
 
     resp_update_env = update_env_variables(
-        func_config_alias,
+        func_config_alias['vars'],
         args.func_name,
     )
     resp_publish = publish_version(
@@ -305,5 +305,5 @@ if __name__ == '__main__':
         args.func_name,
         resp_publish['Version'],
     )
-    clean_up(func_config_dev, args.func_name)
+    clean_up(func_config_dev['vars'], args.func_name)
     logger.info(f'\033[30;42mPublish {args.func_name} SUCCESS!\033[0m')

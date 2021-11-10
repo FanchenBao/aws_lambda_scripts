@@ -77,6 +77,10 @@ Follow these steps to update an existing lambda function
                             REQUIRED. The description of the lambda function.
     ```
 
+### Caveat
+As mentioned already, the lambda function must have already been created for the update script to work properly.
+
+
 ## Publish a lambda function to an alias
 Except from the word `dev`, there is no restriction on alias name. The reason `dev` is forbidden for alias name is to ensure that the function for dev is always tied to `$LATEST` version.
 
@@ -108,7 +112,6 @@ Follow these steps to publish to alias
     --description DESCRIPTION
                             REQUIRED. The description of the lambda function
                             version used forthe alias.
-
     ```
 
 ## Publish a layer

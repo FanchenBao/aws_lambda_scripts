@@ -16,6 +16,7 @@ from config import (
     PYTHON_VERSION,
     ROOT_DIR,
 )
+from shared_utility import wait_for_update_successful
 
 # set up logger
 logger = logging.getLogger()
@@ -150,16 +151,18 @@ def update(
     with open(FUNCTION_ZIP, 'rb') as f_obj:  # upload
         zip_bytes = f_obj.read()
         try:
-            resp1 = CLIENT.update_function_code(
+            CLIENT.update_function_code(
                 FunctionName=func_name,
                 ZipFile=zip_bytes,
             )
         except Exception as err1:
             raise RuntimeError('Update lambda function code FAILED.') from err1
-        logger.info(resp1)
+
+    wait_for_update_successful(func_name, logger)
+    logger.info(f'Lambda function {func_name} updated')
 
     try:  # config
-        resp2 = CLIENT.update_function_configuration(
+        resp = CLIENT.update_function_configuration(
             FunctionName=func_name,
             Description=desc,
             Environment={
@@ -167,11 +170,14 @@ def update(
             },
             Layers=get_layer_arn(cast(List, func_config.get('layers', []))),
         )
-    except Exception as err2:
+    except Exception as err3:
         raise RuntimeError(
             'Update lambda function configuration FAILED.',
-        ) from err2
-    logger.info(resp2)
+        ) from err3
+    cur_env_var = resp['Environment']['Variables']
+    logger.info(f'Updated env variables: {cur_env_var}')
+    cur_layers = [ly['Arn'] for ly in resp['Layers']]
+    logger.info(f'Updated layers: {cur_layers}')
 
 
 if __name__ == '__main__':
@@ -197,6 +203,9 @@ if __name__ == '__main__':
             func_config = json.load(f_obj)
     except FileNotFoundError as err_config:
         exception_handler(f'Must provide {config_file} file', err_config)
+
+    # make sure the function is ready to be updated before proceeding
+    wait_for_update_successful(args.func_name, logger)
 
     try:
         update(args.func_name, args.description, func_config)

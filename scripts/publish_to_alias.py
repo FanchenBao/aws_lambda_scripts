@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict
 
 from config import CLIENT, ROOT_DIR
+from shared_utility import wait_for_update_successful
 
 # set up logger
 logger = logging.getLogger()
@@ -121,7 +122,8 @@ def update_env_variables(env_vars: Dict, func_name: str) -> Dict:
         raise RuntimeError(
             'Update lambda function environment variable FAILED.',
         ) from err
-    logger.info(resp)
+    cur_env_var = resp['Environment']['Variables']
+    logger.info(f'Updated env: {cur_env_var}')
     return resp
 
 
@@ -153,7 +155,7 @@ def publish_version(
         raise RuntimeError(
             'Publish new Lambda function version FAILED.',
         ) from err
-    logger.info(resp)
+    logger.info(f"Published version {resp['Version']}")
     return resp
 
 
@@ -178,7 +180,6 @@ def get_alias(func_name: str, alias: str):
         raise RuntimeError(
             f'Error at acquiring current aliases for {func_name}',
         ) from err
-    logger.info(resp_get_alias)
     return resp_get_alias
 
 
@@ -212,7 +213,10 @@ def assign_alias(
             )
         except Exception as err1:
             raise RuntimeError(f'Unable to update alias: {alias}') from err1
-        logger.info(resp_update)
+        logger.info(
+            f"Updated alias {resp_update['Name']} to version "
+            f"{resp_update['FunctionVersion']}",
+        )
         return resp_update
     logger.info(f'Alias {alias} does not exists. Create it.')
     try:
@@ -224,7 +228,10 @@ def assign_alias(
         )
     except Exception as err2:
         raise RuntimeError(f'Unable to create new alias: {alias}') from err2
-    logger.info(resp_create)
+    logger.info(
+        f"Created alias {resp_create['Name']} to version "
+        f"{resp_create['FunctionVersion']}",
+    )
     return resp_create
 
 
@@ -267,6 +274,44 @@ def read_config(config_file_path: Path) -> Dict[str, Dict]:
     return func_config
 
 
+def publish_to_alias(
+    func_config: Dict, func_name: str, description: str, alias: str,
+) -> None:
+    """The one-stop shop for all steps involved in publishing to an alias.
+
+    :param func_config: configuration of the function under the current target
+        alias
+    :type func_config: Dict
+    :param func_name: function name
+    :type func_name: str
+    :param description: description of the function specific to alias. It can
+        be different from the function description.
+    :type description: str
+    :param alias: the alias to publish to
+    :type alias: str
+    """
+    # make sure the function is ready to be updated before proceeding
+    wait_for_update_successful(func_name, logger)
+    # Publish new version and assign args.alias to it
+    update_env_variables(
+        func_config['vars'],
+        func_name,
+    )
+    resp_func_state = wait_for_update_successful(func_name, logger)
+    resp_publish_version = publish_version(
+        func_name,
+        description,
+        resp_func_state['CodeSha256'],
+        resp_func_state['RevisionId'],
+    )
+    resp_func_state = wait_for_update_successful(func_name, logger)
+    assign_alias(
+        alias,
+        func_name,
+        resp_publish_version['Version'],
+    )
+
+
 if __name__ == '__main__':
     # Parse command line arguments
     parser: ArgumentParser = get_argument_parser()
@@ -287,20 +332,10 @@ if __name__ == '__main__':
         ROOT_DIR.joinpath(f'{args.func_folder_path}/config.{args.alias}.json'),
     )
 
-    resp_update_env = update_env_variables(
-        func_config_alias['vars'],
-        args.func_name,
+    publish_to_alias(
+        func_config_alias, args.func_name, args.description, args.alias,
     )
-    resp_publish = publish_version(
-        args.func_name,
-        args.description,
-        resp_update_env['CodeSha256'],
-        resp_update_env['RevisionId'],
-    )
-    assign_alias(
-        args.alias,
-        args.func_name,
-        resp_publish['Version'],
-    )
+    wait_for_update_successful(args.func_name, logger)
     clean_up(func_config_dev['vars'], args.func_name)
+
     logger.info(f'\033[30;42mPublish {args.func_name} SUCCESS!\033[0m')
